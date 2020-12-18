@@ -3,6 +3,7 @@ import numpy as np
 import sys
 import cv2
 import time
+import threading
 
 
 def conectar(puerto):
@@ -17,75 +18,14 @@ def conectar(puerto):
     
     return clientID
 
-def deteccionColor():
-    time.sleep(0.9)
-    _, camhandle = sim.simxGetObjectHandle(clientID,'Vision_sensor',sim.simx_opmode_oneshot_wait)
-    _, resolution, image = sim.simxGetVisionSensorImage(clientID,camhandle,0,sim.simx_opmode_streaming)
-    time.sleep(1)
 
-    print("resolution")
-    print(resolution)
-    print("image")
-    print(image)
-    print("camhandle")
-    print(camhandle)
-    img = np.array(image,dtype = np.uint8)
-    img.resize([resolution[0],resolution[1],3])
-    img = np.rot90(img,2)
-    img = np.fliplr(img)
-    img = cv2.cvtColor(img,cv2.COLOR_RGB2BGR)
-
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-
-    #color rojo
-    rojoBajo1 =np.array([0,100,20], np.uint8)
-    rojoAlto1 =np.array([8,255,255], np.uint8)
-    rojoBajo2 =np.array([175,100,20],np.uint8)
-    rojoAlto2 =np.array([179,255,255],np.uint8)
-    maskRojo1 = cv2.inRange(hsv, rojoBajo1, rojoAlto1)
-    maskRojo2 = cv2.inRange(hsv,rojoBajo2, rojoAlto2)
-    maskRed = cv2.add(maskRojo1,maskRojo2)
-
-    #color verde
-    verdeBajo = np.array([45,50,50])
-    verdeAlto = np.array([80,255,255])
-    maskGreen = cv2.inRange(hsv,verdeBajo,verdeAlto)
-
-    #color azul
-    azulBajo = np.array([100,65,75])
-    azulAlto = np.array([130,255,255])
-    maskBlue = cv2.inRange(hsv, azulBajo, azulAlto)
-
-    #buscando el centro de los objetos
-    M1 = cv2.moments(maskRed)
-    M2 = cv2.moments(maskGreen)
-    M3 = cv2.moments(maskBlue)
-    area1 = M1['m00']
-    area2 = M2['m00']
-    area3 = M3['m00']
-
-    if(area1 > 100):
-        x = int(M1['m10']/M1['m00'])
-        y = int(M1['m01']/M1['m00'])
-        cv2.rectangle(img,(x,y),(x+2,y+2),(255,0,0),2)
-
-    if(area2 > 100):
-        x = int(M2['m10']/M2['m00'])
-        y = int(M2['m01']/M2['m00'])
-        cv2.rectangle(img, (x,y), (x+2,y+2),(0,0,255),2)
-
-    if(area3 > 100):
-        x = int(M3['m10']/M3['m00'])
-        y = int(M3['m01']/M3['m00'])
-
-    #Se muestra la ventana con el objeto detectado
-    cv2.imshow('Imagen',img)
 
 def agarrarCubo():
   
     sim.simxSetJointTargetPosition(clientID,armJoints[1], -66.7*np.pi/180 ,sim.simx_opmode_oneshot_wait)
     sim.simxSetJointTargetPosition(clientID,armJoints[2], 25*np.pi/180 ,sim.simx_opmode_oneshot_wait)
     sim.simxSetJointTargetPosition(clientID,armJoints[4], -50*np.pi/180 ,sim.simx_opmode_oneshot_wait)
+    sim.simxSetIntegerSignal(clientID, 'activarSuction',1, sim.simx_opmode_oneshot)
 
 def regresarPosInicial():
 
@@ -101,7 +41,28 @@ def colocarCubo1():
     sim.simxSetJointTargetPosition(clientID,armJoints[2], 60*np.pi/180  ,sim.simx_opmode_oneshot_wait)
     sim.simxSetJointTargetPosition(clientID,armJoints[4], -70*np.pi/180,sim.simx_opmode_oneshot_wait)
 
+def colocarCubo2():
+
+    sim.simxSetJointTargetPosition(clientID,armJoints[0], -120*np.pi/180 ,sim.simx_opmode_oneshot_wait)
+    sim.simxSetJointTargetPosition(clientID,armJoints[1], -85*np.pi/180,sim.simx_opmode_oneshot_wait)
+    sim.simxSetJointTargetPosition(clientID,armJoints[2], 60*np.pi/180  ,sim.simx_opmode_oneshot_wait)
+    sim.simxSetJointTargetPosition(clientID,armJoints[4], -70*np.pi/180,sim.simx_opmode_oneshot_wait)
+
+def colocarCubo3():
+
+    sim.simxSetJointTargetPosition(clientID,armJoints[0], 90*np.pi/180 ,sim.simx_opmode_oneshot_wait)
+    sim.simxSetJointTargetPosition(clientID,armJoints[1], -85*np.pi/180,sim.simx_opmode_oneshot_wait)
+    sim.simxSetJointTargetPosition(clientID,armJoints[2], 60*np.pi/180  ,sim.simx_opmode_oneshot_wait)
+    sim.simxSetJointTargetPosition(clientID,armJoints[4], -70*np.pi/180,sim.simx_opmode_oneshot_wait)
  
+
+def clasificador_cubo1():
+    while(1):
+        #lectura sensor de banda
+        print("Aqui debe ir sensor de proximidad")
+        print("Luego de detectar proximidad, agarrar cubo y moverlo")
+        print("repetir dentro de hilo")
+        
 
 
 
@@ -120,10 +81,10 @@ codigoRetorno_j4, armJoints[3] =sim.simxGetObjectHandle(clientID, 'IRB140_joint4
 codigoRetorno_j5, armJoints[4] =sim.simxGetObjectHandle(clientID, 'IRB140_joint5', sim.simx_opmode_blocking)
 codigoRetorno_j6, armJoints[5] =sim.simxGetObjectHandle(clientID, 'IRB140_joint6', sim.simx_opmode_blocking)
 #suctionpad
-codigoRetorno_j6, suctionPad =sim.simxGetObjectHandle(clientID, 'suctionPad', sim.simx_opmode_blocking)
+codigoRetorno_j7, suctionPad =sim.simxGetObjectHandle(clientID, 'suctionPad', sim.simx_opmode_blocking)
+#sensor robot principal
+codigoRetorno_j6, proximidadPrincipal =sim.simxGetObjectHandle(clientID, 'Proximity_sensor', sim.simx_opmode_blocking)
 
-print("joints")
-print(armJoints)
 
 #maximos de velocidades joints
 sim.simxSetJointTargetVelocity(clientID, armJoints[0], 0.1, sim.simx_opmode_oneshot)
@@ -132,6 +93,8 @@ sim.simxSetJointTargetVelocity(clientID, armJoints[2], 0.1, sim.simx_opmode_ones
 sim.simxSetJointTargetVelocity(clientID, armJoints[3], 0.1, sim.simx_opmode_oneshot)
 sim.simxSetJointTargetVelocity(clientID, armJoints[4], 0.1, sim.simx_opmode_oneshot)
 
+#variables globales generales
+colorCubo = 0 #1 ROJO, 2 VERDE, 3 AZUL
 
 #posiciones iniciales
 retorno1, initialTipPosRelative = sim.simxGetObjectPosition(clientID, tip, irb140, sim.simx_opmode_blocking)
@@ -140,27 +103,21 @@ maxJointVelocity=180*np.pi/180
 maxPosVelocity=1.0
 maxOrientVelocity=45*np.pi/180
 
-agarrarCubo()
-time.sleep(1.5)
-sim.simxSetIntegerSignal(clientID, 'activarSuction',1, sim.simx_opmode_oneshot)
-time.sleep(1.5)
-regresarPosInicial()
-time.sleep(1.5)
-colocarCubo1()
-time.sleep(1.5)
-sim.simxSetIntegerSignal(clientID, 'activarSuction',0, sim.simx_opmode_oneshot)
-time.sleep(1.5)
-regresarPosInicial()
+#HILOS SECUNDARIOS  
+# hiloRobotCubo1 = threading.Thread(name = 'Hilo cubo 1',
+#                                 target = clasificador_cubo1,
+#                                 args = (()),
+#                                 daemon = True
+#                             )
+# hiloRobotCubo1.start()
 
 
 
-#moviendo los joints de prueba
+
+#HILO PRINCIPAL
 while(1):
-    #sim.simxSetJointPosition(clientID,armJoints[0], 90*np.pi/180 ,sim.simx_opmode_oneshot)
-    ##prueba colores
 
-
-    #Estas lineas es para que la camara quede en el bucle infinito y vuelva a buscar mas cubos
+    #sensor de vision, reconocimiento de colores de los cubos
     time.sleep(0.9)
     _, camhandle = sim.simxGetObjectHandle(clientID,'Vision_sensor',sim.simx_opmode_oneshot_wait)
     _, resolution, image = sim.simxGetVisionSensorImage(clientID,camhandle,0,sim.simx_opmode_streaming)
@@ -207,18 +164,68 @@ while(1):
         y = int(M1['m01']/M1['m00'])
         cv2.rectangle(img,(x,y),(x+2,y+2),(255,0,0),2)
         print("es rojo")
+        colorCubo = 1
 
     if(area2 > 100):
         x = int(M2['m10']/M2['m00'])
         y = int(M2['m01']/M2['m00'])
         cv2.rectangle(img, (x,y), (x+2,y+2),(0,0,255),2)
         print("es verde")
+        colorCubo = 2
 
     if(area3 > 100):
         x = int(M3['m10']/M3['m00'])
         y = int(M3['m01']/M3['m00'])
         print("es azul")
+        colorCubo = 3
 
-    #idea al mover el robot:
-    #hacer un metodo que se llame "agarrarCUbo" y otro "soltar cubo" y que reciban como parametro los angulos
-    #enviar los angulos cambiados para cada metodo y cada banda, validando si es rojo, azul, verde 
+    #movimiento de robot principal
+    #lectura sensor principal
+    hayCubo = sim.simxReadProximitySensor(clientID, proximidadPrincipal, sim.simx_opmode_blocking)
+  
+    if(colorCubo == 1 and hayCubo[1] == True):
+
+        agarrarCubo()
+        time.sleep(1.5)
+        regresarPosInicial()
+        time.sleep(1.5)
+        colocarCubo1()
+        time.sleep(1.5)
+        sim.simxSetIntegerSignal(clientID, 'activarSuction',0, sim.simx_opmode_oneshot)
+        time.sleep(1.5)
+        regresarPosInicial()
+
+    elif(colorCubo == 2 and hayCubo[1] == True):
+
+        agarrarCubo()
+        time.sleep(1.5)
+        regresarPosInicial()
+        time.sleep(1.5)
+        colocarCubo2()
+        time.sleep(1.5)
+        sim.simxSetIntegerSignal(clientID, 'activarSuction',0, sim.simx_opmode_oneshot)
+        time.sleep(1.5)
+        regresarPosInicial()
+
+
+    elif(colorCubo == 3 and hayCubo[1] == True):
+
+        agarrarCubo()
+        time.sleep(1.5)
+        regresarPosInicial()
+        time.sleep(1.5)
+        colocarCubo3()
+        time.sleep(1.5)
+        sim.simxSetIntegerSignal(clientID, 'activarSuction',0, sim.simx_opmode_oneshot)
+        time.sleep(1.5)
+        regresarPosInicial()
+    else:
+        print("Esperando mas cubos...")
+
+    #empieza distribucion de robots secundarios
+    #lectura de sensores de proximidad para verificar si hay nuevo cubo
+    #se utilizan hilos para que cada robot sense y se mueva sin esperar a los demas
+
+
+
+        
