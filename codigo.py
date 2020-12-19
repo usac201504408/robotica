@@ -77,7 +77,7 @@ def colocarAzul():
     sim.simxSetJointTargetPosition(clientID,armJoints_0[1], -85*np.pi/180,sim.simx_opmode_oneshot_wait)
     sim.simxSetJointTargetPosition(clientID,armJoints_0[2], 60*np.pi/180  ,sim.simx_opmode_oneshot_wait)
     sim.simxSetJointTargetPosition(clientID,armJoints_0[4], -70*np.pi/180,sim.simx_opmode_oneshot_wait)
-
+#FIN: METODOS ROBOT #0
 
 
 clientID = conectar(19999)
