@@ -217,9 +217,9 @@ while(1):
         regresarPosInicial()
         time.sleep(2)
         colocarCubo1()
-        time.sleep(2)
+        time.sleep(1)
         sim.simxSetIntegerSignal(clientID, 'activarSuction',0, sim.simx_opmode_oneshot)
-        time.sleep(2)
+        time.sleep(1)
         regresarPosInicial()
      
 
@@ -231,9 +231,9 @@ while(1):
         regresarPosInicial()
         time.sleep(2)
         colocarCubo2()
-        time.sleep(2)
+        time.sleep(1)
         sim.simxSetIntegerSignal(clientID, 'activarSuction',0, sim.simx_opmode_oneshot)
-        time.sleep(2)
+        time.sleep(1)
         regresarPosInicial()
 
 
@@ -244,9 +244,9 @@ while(1):
         regresarPosInicial()
         time.sleep(2)
         colocarCubo3()
-        time.sleep(2)
+        time.sleep(1)
         sim.simxSetIntegerSignal(clientID, 'activarSuction',0, sim.simx_opmode_oneshot)
-        time.sleep(2)
+        time.sleep(1)
         regresarPosInicial()
 
         #llega al robot #0 que arma los cubos azules        
@@ -268,9 +268,7 @@ while(1):
     else:
         print("Esperando mas cubos...")
 
-    #empieza distribucion de robots secundarios
-    #lectura de sensores de proximidad para verificar si hay nuevo cubo
-    #se utilizan hilos para que cada robot sense y se mueva sin esperar a los demas
+
 
 
 
